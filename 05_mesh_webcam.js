@@ -4,7 +4,7 @@ let canvas = null
 let txtOutput = null
 
 let options = null
-let inputSize = 640
+let inputSize = 320
 let scoreThreshold = .5
 
 const minConfidence = .5
@@ -47,11 +47,10 @@ function sayReady() {
 
 let showingID = 1;
 
-
 function showOption(index) {
+    console.log(`show option ${index}`)
     showingID = index;
 }
-
 
 function setupWebcam() {
     addOutput("setting up webcam...")
@@ -84,6 +83,7 @@ function isFaceDetectionModelLoaded() {
 
 let ModelReady = false;
 
+
 async function updateResults() {
 
     if (!ModelReady) {
@@ -97,27 +97,29 @@ async function updateResults() {
         return setTimeout( () => updateResults() )
     }
 
-    const results = await faceapi.detectSingleFace(webcam, options).withFaceLandmarks()
+    const results = await faceapi.detectAllFaces(webcam, options).withFaceLandmarks();
+
     if (results[0] ) {
+
         sketch.clearRect(0, 0, canvas.width, canvas.height);
         for ( let i = 0; i < results.length; i++)
         {
             switch ( showingID) {
                 case 1:
-                    drawBBox(results["alignedRect"]["box"], results["alignedRect"]["classScore"]) 
+                    drawBBox(results[i]["alignedRect"]["box"], results[i]["alignedRect"]["classScore"]) 
                     break;
                 case 2:
-                    drawPoints(results["landmarks"]["positions"])
+                    drawPoints(results[i]["landmarks"]["positions"])
                     break;
                 case 3:
-                    drawIndices(results["landmarks"]["positions"])
+                    drawIndices(results[i]["landmarks"]["positions"])
                     break;
                 case 4:
-                    drawMesh(results["landmarks"]["positions"])
+                    drawMesh(results[i]["landmarks"]["positions"])
                     break;
             }
         }
-    }
+    } else { console.log("no result obtained")}
     setTimeout( ()=> updateResults())
 }
 
@@ -223,6 +225,7 @@ function drawMesh(points) {
 }
 
 function drawBBox(box, perc) {
+    console.log(box);
     sketch.clearRect(0, 0, canvas.width, canvas.height);
     if (sketch ) {
         sketch.strokeStyle = "#00aa0099"
