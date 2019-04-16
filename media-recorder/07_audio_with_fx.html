@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<head>
+    <meta charset=utf-8>
+    <title>Record Audio with FX</title>
+</head>
+<body>
+    <header>
+        <h2>Record Live Audio with MediaRecorder</h2>
+        <p>Version 0.1</p>
+    </header>
+    <div id="mainFrame">
+        <button id="btnRecord" disabled>Record</button>
+        <button id="btnStop" disabled>Stop</button>
+        <audio id="audio" controls></audio>
+    </div>
+    
+    <script>
+    var btnRecord, btnStop, recorder;
+
+    function setup() {
+        btnRecord = document.getElementById("btnRecord");
+        btnStop = document.getElementById("btnStop")
+        
+        navigator.mediaDevices.getUserMedia( { audio: true})
+            .then( stream => {
+                btnRecord.disabled = false;
+                btnRecord.addEventListener('click', () => { 
+                    btnRecord.disabled = true; 
+                    btnStop.disabled = false; 
+                    recorder.start()});
+                btnStop.addEventListener('click', () => { 
+                    btnRecord.disabled = false; 
+                    btnStop.disabled = true; 
+                    recorder.stop()});
+            
+                // Create a WebAudio pipeline to modify the input sound in real time
+                var audioContext = new AudioContext();
+                var now = audioContext.currentTime;
+
+                // We will build a pipeline like this
+                // stream -> MediaStreamSource -> filter -> outputNode
+                // where the frequency of the filter changes automatically with an oscillator + gain
+                var inputNode = audioContext.createMediaStreamSource(stream);
+
+                var filter = audioContext.createBiquadFilter();
+                filter.frequency.setValueAtTime(1000, now);
+                filter.type = 'highpass';
+                filter.Q.value = 40;
+                
+                var oscillator = audioContext.createOscillator();
+                oscillator.frequency.setValueAtTime(0.5, now)
+                oscillator.start();
+
+                var gain = audioContext.createGain();
+                gain.gain.setValueAtTime(1000, now)
+                oscillator.connect(gain);
+                gain.connect(filter.frequency);
+
+                var outputNode = audioContext.createMediaStreamDestination();
+                inputNode.connect(filter);
+                filter.connect(outputNode);
+
+                //create a mediarecorder and pipe the filtered audio stream to it
+                recorder = new MediaRecorder(outputNode.stream);
+
+                recorder.addEventListener('dataavailable', function(evt) {
+                    updateAudio(evt.data);
+                })
+            });
+    };
+
+    function updateAudio(blob) { 
+        var audio = document.getElementById("audio");
+        audio.src = URL.createObjectURL(blob);
+        audio.play();
+    };
+
+    window.onload = function() {
+        setup();
+    };
+
+</script>
+</body>

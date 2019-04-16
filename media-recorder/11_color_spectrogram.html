@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<head>
+    <meta charset=utf-8>
+    <title>Color Spectrogram</title>
+</head>
+<body>
+    <header>
+        <h2>Color Spectrogram</h2>
+    </header>
+    <div id="mainFrame" style="display: table-caption">
+        <div id="rotCanvas">
+            <canvas id="canvas" width="512" height="256" style="background: black"></canvas>
+        </div>
+            <button id="btnStart" click="setup()">START MICROPHONE</button>
+    </div>    
+    <script>
+
+    var mediaStreamSource = null;
+    var audioContext = null;
+    var sketch = null;
+    var WIDTH;
+    var HEIGHT;    
+
+    var analyser = null;
+    var bufferLength = 0;
+    var waveform;
+
+    var COUNTER; // our current time indicator
+    var STRIDE; // the width of the canvas in bytes
+
+    function drawLoop(time) {
+
+        analyser.getFloatTimeDomainData(waveform);
+
+        const slice = sketch.getImageData(0, 0, 1, HEIGHT);
+
+        // will loop 512 times...
+        for (var p = 0; p < waveform.length; p++ ) 
+        { 
+            var avgStrength = waveform[p]; // (waveform[p] + waveform[p+1])*.5; // averages our 1024byte waveform into a 512 presentation by averaging.
+
+            var intensity = 255 * ((1 + avgStrength)/2);
+            /*
+            if ( p == 256 ) {
+                console.log(`avgStrength: ${avgStrength}  intensity: ${intensity}`);
+            }
+            */
+            var byteIndex = p * 4; // get's the byte index
+            slice.data[byteIndex + 0] = intensity; //avgStrength;
+            slice.data[byteIndex + 1] = intensity; //avgStrength;
+            slice.data[byteIndex + 2] = intensity; // avgStrength;
+            slice.data[byteIndex + 3] = 255;
+        }
+
+        sketch.putImageData(slice, COUNTER, 0);
+
+        COUNTER++;
+        COUNTER %= WIDTH;
+
+        requestAnimationFrame(drawLoop)
+    }
+
+
+    function setup() {
+
+        sketch = document.getElementById("canvas").getContext("2d");
+
+        audioContext = new AudioContext();
+
+        navigator.mediaDevices.getUserMedia({audio: true})
+            .then( (stream) => {
+                mediaStreamSource = audioContext.createMediaStreamSource(stream);
+                
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 512;
+
+                analyser.minDecibels = -40;
+                analyser.maxDecibels = 10;
+                analyser.smoothingTimeConstant = 0.85;
+                
+                bufferLength = analyser.frequencyBinCount;
+
+                waveform = new Float32Array(bufferLength);
+
+                mediaStreamSource.connect(analyser);
+
+                drawLoop();
+            }).catch( (e) => {
+                console.log("didn't get stream. with error : " + e)
+            });
+    };
+
+    window.onload = function() {
+        document.getElementById("btnStart").addEventListener('click', setup);
+        HEIGHT = document.getElementById("canvas").height;
+        WIDTH = document.getElementById("canvas").width;
+        COUNTER = 0;
+        STRIDE = WIDTH * 4;
+    };
+
+</script>
+<style type="text/css">
+
+
+</style>
+</body>

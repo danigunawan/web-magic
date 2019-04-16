@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<head>
+    <meta charset=utf-8>
+    <title>Record Live A/V</title>
+</head>
+<body>
+    <header>
+        <h2>Record Live Audio & Video with MediaRecorder</h2>
+        <p>Version 0.2</p>
+    </header>
+    <div id="mainFrame">
+        <button id="btnRecord" disabled>Record</button>
+        <button id="btnStop" disabled>Stop</button>
+        <div id="videosFrame">
+            <video id="video_live" width="480"></video>
+            <video id="video_rec" width="480"></video>
+        </div>
+    </div>
+    
+    <script>
+
+    var btnRecord, btnStop, recorder, liveStream;
+
+    function setup() {
+        btnRecord = document.getElementById("btnRecord");
+        btnStop = document.getElementById("btnStop")
+        
+        navigator.mediaDevices.getUserMedia( { audio: true, video: true})
+            .then( function(stream) {
+                console.log("mediaDevices.getUserMedia() called")
+                liveStream = stream;
+
+                var liveVideo = document.getElementById("video_live")
+                liveVideo.srcObject = stream;
+                liveVideo.play();
+
+                btnRecord.disabled = false;
+                btnRecord.addEventListener('click', startRecording);
+                btnStop.addEventListener('click', stopRecording);
+            });
+    };
+
+    function startRecording() {
+        console.log("startRecording...")
+        recorder = new MediaRecorder(liveStream);
+        recorder.addEventListener('dataavailable', onRecordingReady);
+        btnRecord.disabled = true;
+        btnStop.disabled = false;
+        recorder.start();
+    }
+
+    function stopRecording() {
+        btnRecord.disabled = false;
+        btnStop.disabled = true;
+
+        if ( recorder.state === "inactive") {
+            console.log("recorder in inactive state.")
+        } else {
+            console.log("stopping recorder...")
+            recorder.stop();
+        }
+    }
+
+    function onRecordingReady(e) {
+        console.log('onRecordingReady() called')
+        // e.data contains a blob representing the recording
+        var video = document.getElementById("video_rec");
+        video.src = URL.createObjectURL(e.data);
+        video.play();
+    }
+
+    window.onload = function() {
+        setup();
+    };
+
+</script>
+</body>

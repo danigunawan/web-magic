@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+<meta charset='utf-8'>
+<canvas width="1200" height="600"></canvas>
+<style type=text/css>
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+
+canvas { display:block; }
+
+</style>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+
+var canvas,
+    context,
+    width, 
+    height;
+
+var points = [];
+
+function setup() {
+
+    width = document.body.clientWidth,
+    height = document.body.clientHeight;
+
+    canvas  = document.querySelector("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    context = canvas.getContext("2d");
+    context.save();
+    context.fillStyle = "#000000";
+    context.fillRect(0,0,width,height);
+    context.restore();
+
+    canvas.addEventListener('mousedown', mouse_down, false);
+    document.addEventListener('mousemove', mouse_move, false);
+    document.addEventListener('mouseup', mouse_up, false);
+
+
+    // SETUP POINTS
+    for ( var i = 0; i < 100; i++ ) {
+
+    }
+
+
+    d3.timer(update);
+}
+
+
+function update(t) {
+
+}
+
+function mouse_down(e) {
+    e.preventDefault();
+
+}
+
+function mouse_move(e) {
+
+}
+
+function mouse_up(e) {
+
+}
+
+setup();
+
+</script>
+</html>

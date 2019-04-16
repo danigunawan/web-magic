@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<head>
+    <meta charset=utf-8>
+    <title>Visualizing Live Audio</title>
+</head>
+<body>
+    <header>
+        <h2>Using an AudioContext analyser</h2>
+        <p>test version 0.1.2</p>
+    </header>
+    <div id="mainFrame" style="display: table-caption">
+            <canvas id="canvas" width="500" height="50"></canvas>
+            <button id="btnStart" click="setup()">START 2</button>
+    </div>    
+    <script>
+
+    var mediaStreamSource = null;
+    var audioContext = null;
+    var canvasContext = null;
+    var WIDTH = 500;
+    var HEIGHT= 50;    
+
+
+    var analyser = null;
+    var bufferLength = 0;
+
+    function drawLoop(time) {
+
+        analyser.getByteFrequencyData(data);
+
+        canvasContext.clearRect(0,0,WIDTH, HEIGHT)
+
+        var barWidth = (WIDTH / bufferLength) * 2.5;
+        var barHeight;
+        var x = 0;
+        
+        for(var i = 0; i < bufferLength; i++) {
+          barHeight = data[i];
+          canvasContext.fillStyle = 'rgb(' + (barHeight+100) + ',50,50)';
+          canvasContext.fillRect(x,HEIGHT-barHeight/2,barWidth,barHeight/2);
+          x += barWidth + 1;
+        }        
+        requestAnimationFrame(drawLoop)
+    }
+
+    function setup() {
+
+        canvasContext = document.getElementById("canvas").getContext("2d");
+
+        audioContext = new AudioContext();
+
+
+        navigator.mediaDevices.getUserMedia({audio: true})
+            .then( (stream) => {
+                mediaStreamSource = audioContext.createMediaStreamSource(stream);
+                
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 1024;
+                bufferLength = analyser.frequencyBinCount;
+                data = new Uint8Array(bufferLength);
+                mediaStreamSource.connect(analyser);
+
+                // TO HEAR IT BACK (BUT THEN GET ECHO), YOU WOULD DO THIS:
+                // analyser.connect(audioContext.destination);
+
+                drawLoop();
+            }).catch( (e) => {
+                console.log("didn't get stream. with error : " + e)
+            });
+    };
+
+    window.onload = function() {
+        document.getElementById("btnStart").addEventListener('click', setup);
+    };
+
+</script>
+</body>

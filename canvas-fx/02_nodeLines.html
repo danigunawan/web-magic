@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+<meta charset='utf-8'>
+<canvas width="1200" height="600"></canvas>
+<style type=text/css>
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+
+canvas { display:block; }
+
+</style>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+
+var canvas,
+    context,
+    width, 
+    height,
+    mouse_x = 100,
+    mouse_y = 100,
+    is_down = false;
+
+function setup() {
+
+    width = document.body.clientWidth,
+    height = document.body.clientHeight;
+
+    canvas  = document.querySelector("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    context = canvas.getContext("2d");
+    context.save();
+    context.fillStyle = "#000000";
+    context.fillRect(0,0,width,height);
+    context.restore();
+
+    canvas.addEventListener('mousedown', mouse_down, false);
+    canvas.addEventListener('touchstart', touch_start, false);
+
+    document.addEventListener('mousemove', mouse_move, false);
+    document.addEventListener('mouseup', mouse_up, false);
+    document.addEventListener('touchmove', touch_move, false);
+    document.addEventListener('touchend', touch_end, false);
+
+    // NOTE: in Javascript, you can use the double not operator (~~)
+    // as a faster substitute for Math.floor()
+    for (var i = 0; i < 100; ++i) {
+        var kinda_middle_x = ~~( width*.25 + Math.random()*(width*.5) );
+        var kinda_middle_y = ~~( height*.25 + Math.random()*(height*.5) );
+        addPoint(kinda_middle_x, kinda_middle_y);
+    }
+
+    d3.timer(update);
+}
+
+
+function mouse_down(e) {
+    //is_down = true; 
+    is_dirty = true; 
+    e.preventDefault(); 
+    mouse_x = e.clientX; 
+    mouse_y = e.clientY; 
+}
+
+function mouse_move(e) { 
+    //mouse_x = e.clientX; 
+    //mouse_y = e.clientY; 
+}
+
+function mouse_up(e) { 
+    //is_down = false; 
+}
+
+function touch_start(e) {
+    /*
+    if ( is_down ) return;
+    is_down = true;
+    if (e.touches.length == 1) { 
+        e.preventDefault();
+        mouse_x = e.touches[0].pageX;
+        mouse_y = e.touches[0].pageY;
+    }
+    */
+}
+
+function touch_move(e) {
+    /*
+    if (e.touches.length == 1) { 
+        mouse_x = e.touches[0].pageX;
+        mouse_y = e.touches[0].pageY;
+    }
+    */
+}
+
+function addPoint(_x, _y) {
+    var newSize = 150 + ~~(Math.random()*150);
+    points.push( {
+        x: _x, 
+        y:_y,
+        vx: Math.random() - Math.random(),
+        vy: Math.random() - Math.random(),
+        size: newSize,
+        halfSize: ~~(newSize * .5)
+    });
+
+}
+
+function touch_end(e) {
+    //is_down = false;
+}
+
+let points = [];
+
+var is_dirty = false;
+
+function update(elapsed) {
+
+    // NOTE: This originally started as an experiment using
+    // mouse or touch to draw points on the screen.
+    // I'm leaving the event handlers and original 'is_down' code
+    // but decided to only place new particles on a 'mousedown' event
+    // instead of a mouse or touch move event to keep the experience
+    // a bit more contained. 
+
+    //if (is_down) {
+    if (is_dirty) {
+        addPoint(mouse_x, mouse_y);
+        is_dirty = false;
+    }
+
+    render();
+}
+
+
+function dist(p1, p2 ) {
+    var a = p1.x - p2.x;
+    var b = p1.y - p2.y;
+    return Math.sqrt(a*a + b*b);
+}
+
+function render() {
+
+    context.save();
+
+    context.fillStyle = "#00000066";
+    context.fillRect(0,0,width,height);
+
+    var joiners = [];
+
+    // DRAW THE LARGE PARTICLES
+    for ( let i = 0; i < points.length; ++i) {
+
+        var p = points[i];
+
+        // check the other points against this one for joiner lines
+        for ( let x = i + 1; x < points.length; ++x) {
+            // NOTE: This is a very naive implementation for finding joiner
+            // lines and will slow down as points grows considerably. There are
+            // pre-checks and other optimization hacks we could use here, but 
+            // that is beyond the scope of this quick sketch and a bit over kill for now IMO
+            var distance = dist(p, points[x]);
+            if ( distance <= 100 ) {
+                joiners.push( { x1: p.x, y1: p.y, x2: points[x].x, y2: points[x].y, distance: distance })
+            }
+        }
+
+        p.vx += Math.random() - Math.random();
+        p.vy += Math.random() - Math.random();
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= .96;
+        p.vy *= .96;
+        if ( p.x > width ) p.x -= width;
+        if ( p.x < 0 ) p.x += width;        
+        if ( p.y > height ) p.y -= height;
+        if ( p.y < 0 ) p.y += height;
+
+        var radgrad = context.createRadialGradient(
+            p.x,
+            p.y,
+            0,
+            p.x,
+            p.y,
+            p.halfSize);
+
+        var x255 = ~~(255 * (p.x / width)); 
+        var y255 = ~~(255 * (p.y / height)); 
+
+        var colorBase = "rgba(" + x255 + ",50," + (255 - y255) + ",";
+
+        radgrad.addColorStop( 0.0, colorBase + "1)" );
+        radgrad.addColorStop( 0.05, colorBase + ".5)" );
+        radgrad.addColorStop( 0.051, colorBase + ".05)" );
+        radgrad.addColorStop( 1.0, colorBase + "0)" );
+
+        context.beginPath();
+        context.fillStyle = radgrad;
+        context.fillRect(p.x-p.halfSize,p.y-p.halfSize,p.size,p.size);
+        context.fill();
+    }
+
+    // DRAW THE JOINER LINES
+    for ( var i = 0; i < joiners.length; i++ ) {
+        var j = joiners[i];
+        context.beginPath();
+        context.strokeStyle = "rgba(255,255,255," + (1.0 - (j.distance *.01)) + ")";
+        context.moveTo(j.x1, j.y1);
+        context.lineTo(j.x2, j.y2);
+        context.stroke();
+    }
+
+
+    context.restore();
+}
+
+setup();
+
+
+</script>
+
+</html>

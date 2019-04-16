@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<head>
+    <meta charset=utf-8>
+    <title>Visualizing Live Audio</title>
+</head>
+<body>
+    <header>
+        <h2>Using an AudioContext analyser</h2>
+        <p>test version 0.1.4</p>
+    </header>
+    <div id="mainFrame" style="display: table-caption">
+        <div id="rotCanvas">
+            <canvas id="canvas" width="1" height="512"></canvas>
+        </div>
+            <button id="btnStart" click="setup()">START 2</button>
+    </div>    
+    <script>
+
+    var mediaStreamSource = null;
+    var audioContext = null;
+    var canvasContext = null;
+    var WIDTH;
+    var HEIGHT;    
+
+
+    var analyser = null;
+    var bufferLength = 0;
+
+    var data;
+    var waveform;
+    var spectrum;
+
+    var specOffset = 0;
+
+
+
+    function drawLoop(time) {
+        //console.log(boom);
+        analyser.getByteFrequencyData(data)
+        const slice = canvasContext.getImageData(0, specOffset, WIDTH, 1)
+        for ( var i = 0; i < data.length; i++ ) {
+            slice.data[4*i+0] = data[i] // R
+            slice.data[4*i+1] = data[i] // G
+            slice.data[4*i+2] = data[i] // B
+            slice.data[4*i+3] = 255 // R
+        }
+        canvasContext.putImageData(slice, 0, specOffset)
+        specOffset += 1
+        specOffset %= HEIGHT;
+        requestAnimationFrame(drawLoop)
+    }
+
+
+    function setup() {
+
+        canvasContext = document.getElementById("canvas").getContext("2d");
+
+        audioContext = new AudioContext();
+
+        navigator.mediaDevices.getUserMedia({audio: true})
+            .then( (stream) => {
+                mediaStreamSource = audioContext.createMediaStreamSource(stream);
+                
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 512; // twice the size of what the frequencyBinCount will be...
+                console.log("ffSize: " + analyser.fftSize)
+                bufferLength = analyser.frequencyBinCount;
+                console.log("bufferLength: " + bufferLength)
+                data = new Uint8Array(bufferLength);
+                
+                mediaStreamSource.connect(analyser);
+
+                WIDTH = bufferLength;
+                HEIGHT = document.getElementById("canvas").height;
+                document.getElementById("canvas").width = WIDTH;
+
+
+                drawLoop();
+            }).catch( (e) => {
+                console.log("didn't get stream. with error : " + e)
+            });
+    };
+
+    window.onload = function() {
+        document.getElementById("btnStart").addEventListener('click', setup);
+
+    };
+
+</script>
+<style type="text/css">
+
+#rotCanvas {
+    transform: rotate(-90deg) translateX(100px) translateY(256px);
+}
+
+</style>
+</body>

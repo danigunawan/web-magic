@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<head>
+    <meta charset=utf-8>
+    <title>Record Audio</title>
+</head>
+<body>
+    <header>
+        <h2>Record Live Audio with MediaRecorder</h2>
+        <p>Version 0.1</p>
+    </header>
+    <div id="mainFrame">
+        <button id="btnRecord" disabled>Record</button>
+        <button id="btnStop" disabled>Stop</button>
+        <audio id="audio" controls></audio>
+    </div>
+    
+    <script>
+    var btnRecord, btnStop, recorder;
+
+    function setup() {
+        btnRecord = document.getElementById("btnRecord");
+        btnStop = document.getElementById("btnStop")
+        
+        navigator.mediaDevices.getUserMedia( { audio: true})
+            .then( stream => {
+                btnRecord.disabled = false;
+                btnRecord.addEventListener('click', () => { 
+                    btnRecord.disabled = true; 
+                    btnStop.disabled = false; 
+                    recorder.start()});
+                btnStop.addEventListener('click', () => { 
+                    btnRecord.disabled = false; 
+                    btnStop.disabled = true; 
+                    recorder.stop()});
+                recorder = new MediaRecorder(stream);
+                recorder.addEventListener('dataavailable', onRecordingReady);
+            });
+    };
+
+    function onRecordingReady(e) {
+        // e.data contains a blob representing the recording
+        console.log(e);
+        audio.src = URL.createObjectURL(e.data);
+        audio.play();
+    }
+
+    window.onload = function() {
+        setup();
+    };
+
+</script>
+</body>
