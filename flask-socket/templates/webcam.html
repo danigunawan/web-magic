@@ -2,7 +2,7 @@
 <head>
     <meta charset=utf-8>
     <title>face-api : static image</title>
-    <script src="face-api.js"></script>
+    <script src="{{ url_for('static',filename='face-api.js') }}"></script>
 </head>
 <body>
     <div id="mainFrame">
@@ -19,7 +19,7 @@
         </div>
     </div>
 </body>
-<script src="webcam.js"></script>
+<script src="{{ url_for('static',filename='webcam.js') }}"></script>
 <style type="text/css">
     
     html, body {

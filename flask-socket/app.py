@@ -10,7 +10,10 @@ eventlet.monkey_patch()
 
 import numpy as np
 
-app = Flask(__name__)
+app = Flask(__name__,
+    template_folder = "./templates",
+    static_folder = "./static")
+
 socketio = SocketIO(app, async_mode="eventlet")
 
 @app.before_first_request
@@ -21,7 +24,7 @@ def initializeServer():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('webcam.html')
 
 @socketio.on('connect', namespace="/eq")
 def app_connect():
