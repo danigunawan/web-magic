@@ -2,6 +2,7 @@
 <head>
     <meta charset=utf-8>
     <title>face-api : static image</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
     <script src="{{ url_for('static',filename='face-api.js') }}"></script>
 </head>
 <body>
@@ -10,16 +11,14 @@
             <video autoplay onloadedmetadata="sayReady()" muted id="webcam" width="640" height="480"></video>
             <canvas id="canvas"></canvas>
         </div>
-        <button id="btnBox" class="flatButton" onclick="showOption(1)">Bounding Box</button>
-        <button id="btnLandmarks" class="flatButton" onclick="showOption(2)">Landmarks</button>
-        <button id="btnIndices" class="flatButton" onclick="showOption(3)">Indices</button>
-        <button id="btnMesh" class="flatButton" onclick="showOption(4)">Custom Mesh</button>
+        <button id="btnLandmarks" class="flatButton" onclick="testSocket()">Test Socket</button>
 
         <div id="txtOutput">
         </div>
     </div>
 </body>
 <script src="{{ url_for('static',filename='webcam.js') }}"></script>
+
 <style type="text/css">
     
     html, body {
