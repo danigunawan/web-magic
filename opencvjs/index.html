@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Hello OpenCV.js</title>
+        <script async src="opencv.js" onload="onOpenCVReady()" type="text/javascript"></script>
+    </head>
+    <body>
+        <h2>Hello OpenCV.js</h2>
+        <p id="status">OpenCV.js is loading...</p>
+        <div>
+            <div class="inputoutput">
+                <img id="imageSrc" alt="no image"/>
+                <button id="btnClick">click me!</button>
+                <button id="btnDownload">download</button>
+                <div class="caption">imageSrc <input type="file" id="fileInput" name="file"/></div>
+            </div>
+            <div class="inputoutput">
+                <canvas id="canvasOutput"></canvas>
+                <div class="caption">canvasOutput</div>                
+            </div>
+        </div>
+        <script type="text/javascript">
+
+            function btnClicked(e) {
+
+            }
+
+            function onOpenCVReady() {
+                console.log("onOpenCVReady() called...")
+                document.getElementById('status').innerHTML = 'OpenCV.js is ready';
+            }
+
+            let btnClick = document.getElementById("btnClick")
+            btnClick.addEventListener("click", btnClicked);
+
+            let btnDownload = document.getElementById("btnDownload")
+            btnDownload.addEventListener("click", function() {
+               this.href = document.getElementById("imageCanvas").toDataURL();
+               this.download = "image.png"; 
+            });
+
+            let imgElement = document.getElementById("imageSrc")
+
+            imgElement.onload = function() {
+                let mat = cv.imread(imgElement);
+                cv.imshow('canvasOutput', mat);
+                mat.delete();
+            }
+            let inputElement = document.getElementById("fileInput")
+            inputElement.addEventListener("change", (e) => {
+                imgElement.src = URL.createObjectURL(e.target.files[0]);
+            }, false);
+        </script>
+    </body>
+</html>
